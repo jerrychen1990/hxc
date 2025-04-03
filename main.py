@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from hxc import process_query
 import json
 from typing import Optional
+from datetime import datetime
 
 app = FastAPI(title="HXC API")
 
@@ -43,7 +44,6 @@ async def stream_query(request: QueryRequest):
     )
 
 from typing import List
-from datetime import datetime
 
 class UserInfo(BaseModel):
     user_id: str
@@ -55,7 +55,6 @@ class UserInfo(BaseModel):
     city: str
     district: str
     chat_count: int
-    last_active: datetime
 
 # 模拟用户数据存储
 users_db = [
@@ -90,17 +89,47 @@ async def get_users():
         return users_db
     except Exception as e:
         return {"error": str(e)}
+    
+from datetime import datetime
+from enum import Enum
 
+class ActionType(str, Enum):
+    CHAT = "对话"
+    POLICY_RECOMMEND = "推政策" 
+    POLICY_CONTACT = "联系政策"
 
+class UserAction(BaseModel):
+    user_id: str
+    action_time: datetime
+    action_type: ActionType
 
+# 模拟用户行为数据
+user_actions_db = [
+    {
+        "user_id": "u001",
+        "action_time": datetime(2024, 1, 1, 10, 30),
+        "action_type": ActionType.CHAT
+    },
+    {
+        "user_id": "u001", 
+        "action_time": datetime(2024, 1, 1, 14, 20),
+        "action_type": ActionType.POLICY_RECOMMEND
+    },
+    {
+        "user_id": "u002",
+        "action_time": datetime(2024, 1, 2, 9, 15), 
+        "action_type": ActionType.POLICY_CONTACT
+    }
+]
 
-
-
-
-
-
-
+@app.get("/api/user-actions", response_model=List[UserAction])
+async def get_user_actions():
+    """获取用户行为信息"""
+    try:
+        return user_actions_db
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
